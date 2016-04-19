@@ -28,11 +28,13 @@
           return '<div class="hoverinfo"><strong>' + geography.properties.name + '</strong></div>';
         },
         popupOnHover: true,
+        popupTop: function(d, options, position) { return 30; },
+        popupLeft: function(d, options, position) { return 0; },
         highlightOnHover: true,
         highlightFillColor: '#FC8D59',
         highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
         highlightBorderWidth: 2,
-        highlightBorderOpacity: 1
+        highlightBorderOpacity: 1,
     },
     projectionConfig: {
       rotation: [97, 0]
@@ -46,6 +48,8 @@
         popupTemplate: function(geography, data) {
           return '<div class="hoverinfo"><strong>' + data.name + '</strong></div>';
         },
+        popupTop: function(d, options, position) { return 30; },
+        popupLeft: function(d, options, position) { return 0; },
         fillOpacity: 0.75,
         animate: true,
         highlightOnHover: true,
@@ -76,7 +80,9 @@
         else {
           return '';
         }
-      }
+      },
+      popupTop: function(d, options, position) { return 30; },
+      popupLeft: function(d, options, position) { return 0; },
     }
   };
 
@@ -241,34 +247,34 @@
     if ( options.highlightOnHover || options.popupOnHover ) {
       svg.selectAll('.datamaps-subunit')
         .on('mouseover', function(d) {
-          var $this = d3.select(this);
-          var datum = self.options.data[d.id] || {};
-          if ( options.highlightOnHover ) {
-            var previousAttributes = {
-              'fill':  $this.style('fill'),
-              'stroke': $this.style('stroke'),
-              'stroke-width': $this.style('stroke-width'),
-              'fill-opacity': $this.style('fill-opacity')
-            };
+            var $this = d3.select(this);
+            var datum = self.options.data[d.id] || {};
+            if ( options.highlightOnHover ) {
+              var previousAttributes = {
+                'fill':  $this.style('fill'),
+                'stroke': $this.style('stroke'),
+                'stroke-width': $this.style('stroke-width'),
+                'fill-opacity': $this.style('fill-opacity')
+              };
 
-            $this
-              .style('fill', val(datum.highlightFillColor, options.highlightFillColor, datum))
-              .style('stroke', val(datum.highlightBorderColor, options.highlightBorderColor, datum))
-              .style('stroke-width', val(datum.highlightBorderWidth, options.highlightBorderWidth, datum))
-              .style('stroke-opacity', val(datum.highlightBorderOpacity, options.highlightBorderOpacity, datum))
-              .style('fill-opacity', val(datum.highlightFillOpacity, options.highlightFillOpacity, datum))
-              .attr('data-previousAttributes', JSON.stringify(previousAttributes));
+              $this
+                  .style('fill', val(datum.highlightFillColor, options.highlightFillColor, datum))
+                  .style('stroke', val(datum.highlightBorderColor, options.highlightBorderColor, datum))
+                  .style('stroke-width', val(datum.highlightBorderWidth, options.highlightBorderWidth, datum))
+                  .style('stroke-opacity', val(datum.highlightBorderOpacity, options.highlightBorderOpacity, datum))
+                  .style('fill-opacity', val(datum.highlightFillOpacity, options.highlightFillOpacity, datum))
+                  .attr('data-previousAttributes', JSON.stringify(previousAttributes));
 
-            // As per discussion on https://github.com/markmarkoh/datamaps/issues/19
-            if ( ! /((MSIE)|(Trident))/.test(navigator.userAgent) ) {
-             moveToFront.call(this);
+              // As per discussion on https://github.com/markmarkoh/datamaps/issues/19
+              if ( ! /((MSIE)|(Trident))/.test(navigator.userAgent) ) {
+                moveToFront.call(this);
+              }
             }
-          }
 
-          if ( options.popupOnHover ) {
-            self.updatePopup($this, d, options, svg);
-          }
-        })
+            if ( options.popupOnHover ) {
+              self.updatePopup($this, d, options, svg);
+            }
+          })
         .on('mouseout', function() {
           var $this = d3.select(this);
 
@@ -1064,7 +1070,8 @@
     element.on('mousemove', function() {
       var position = d3.mouse(self.options.element);
       d3.select(self.svg[0][0].parentNode).select('.datamaps-hoverover')
-        .style('top', ( (position[1] + 30)) + "px")
+        .style('top', ( (position[1] + options.popupTop(d, options, position))) + "px")
+        .style('left', ( (position[0] + options.popupLeft(d, options, position))) + "px")
         .html(function() {
           var data = JSON.parse(element.attr('data-info'));
           try {
@@ -1073,7 +1080,6 @@
             return "";
           }
         })
-        .style('left', ( position[0]) + "px");
     });
 
     d3.select(self.svg[0][0].parentNode).select('.datamaps-hoverover').style('display', 'block');
