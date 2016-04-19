@@ -55,7 +55,41 @@
         highlightBorderOpacity: 1,
         highlightFillOpacity: 0.85,
         exitDelay: 100,
-        key: JSON.stringify
+        key: JSON.stringify,
+        mouseover: function($this, datum, options, svg, self) {
+          if (options.highlightOnHover) {
+            // Save all previous attributes for mouseout
+            var previousAttributes = {
+              'fill':  $this.style('fill'),
+              'stroke': $this.style('stroke'),
+              'stroke-width': $this.style('stroke-width'),
+              'fill-opacity': $this.style('fill-opacity')
+            };
+
+            $this
+                .style('fill', val(datum.highlightFillColor, options.highlightFillColor, datum))
+                .style('stroke', val(datum.highlightBorderColor, options.highlightBorderColor, datum))
+                .style('stroke-width', val(datum.highlightBorderWidth, options.highlightBorderWidth, datum))
+                .style('stroke-opacity', val(datum.highlightBorderOpacity, options.highlightBorderOpacity, datum))
+                .style('fill-opacity', val(datum.highlightFillOpacity, options.highlightFillOpacity, datum))
+                .attr('data-previousAttributes', JSON.stringify(previousAttributes));
+          }
+
+          if (options.popupOnHover) {
+            self.updatePopup($this, datum, options, svg);
+          }
+        },
+        mouseout: function($this, datum, options, svg) {
+          if (options.highlightOnHover) {
+            //reapply previous attributes
+            var previousAttributes = JSON.parse( $this.attr('data-previousAttributes') );
+            for ( var attr in previousAttributes ) {
+              $this.style(attr, previousAttributes[attr]);
+            }
+          }
+
+          d3.selectAll('.datamaps-hoverover').style('display', 'none');
+        }
     },
     arcConfig: {
       strokeColor: '#DD1C77',
@@ -555,41 +589,11 @@
         })
         .on('mouseover', function ( datum ) {
           var $this = d3.select(this);
-
-          if (options.highlightOnHover) {
-            // Save all previous attributes for mouseout
-            var previousAttributes = {
-              'fill':  $this.style('fill'),
-              'stroke': $this.style('stroke'),
-              'stroke-width': $this.style('stroke-width'),
-              'fill-opacity': $this.style('fill-opacity')
-            };
-
-            $this
-              .style('fill', val(datum.highlightFillColor, options.highlightFillColor, datum))
-              .style('stroke', val(datum.highlightBorderColor, options.highlightBorderColor, datum))
-              .style('stroke-width', val(datum.highlightBorderWidth, options.highlightBorderWidth, datum))
-              .style('stroke-opacity', val(datum.highlightBorderOpacity, options.highlightBorderOpacity, datum))
-              .style('fill-opacity', val(datum.highlightFillOpacity, options.highlightFillOpacity, datum))
-              .attr('data-previousAttributes', JSON.stringify(previousAttributes));
-          }
-
-          if (options.popupOnHover) {
-            self.updatePopup($this, datum, options, svg);
-          }
+          options.mouseover($this, datum, self);
         })
         .on('mouseout', function ( datum ) {
           var $this = d3.select(this);
-
-          if (options.highlightOnHover) {
-            //reapply previous attributes
-            var previousAttributes = JSON.parse( $this.attr('data-previousAttributes') );
-            for ( var attr in previousAttributes ) {
-              $this.style(attr, previousAttributes[attr]);
-            }
-          }
-
-          d3.selectAll('.datamaps-hoverover').style('display', 'none');
+          options.mouseout($this, datum, self);
         })
 
     bubbles.transition()
